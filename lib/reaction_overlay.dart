@@ -11,6 +11,7 @@ class ReactionOverlay extends StatefulWidget {
     required this.reactions,
     this.backgroundColor,
     this.size,
+    this.overlayHeight = 60,
   });
   final Function() onDismiss;
   final Function(int) onPressReact;
@@ -19,7 +20,7 @@ class ReactionOverlay extends StatefulWidget {
   final double overlaySize;
   final Color? backgroundColor;
   final Size? size;
-
+  final double overlayHeight;
   @override
   State<ReactionOverlay> createState() => _ReactionOverlayState();
 }
@@ -66,8 +67,10 @@ class _ReactionOverlayState extends State<ReactionOverlay>
                   borderRadius: BorderRadius.circular(30),
                   child: Container(
                     width: widget.overlaySize,
-                    constraints:
-                        const BoxConstraints(maxHeight: 60, minHeight: 60),
+                    constraints: BoxConstraints(
+                      maxHeight: widget.overlayHeight,
+                      minHeight: widget.overlayHeight,
+                    ),
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30),
                         color: widget.backgroundColor),
