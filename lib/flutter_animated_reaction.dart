@@ -21,6 +21,9 @@ class AnimatedFlutterReaction {
     final Offset bottomRight =
         box.size.bottomCenter(box.localToGlobal(Offset.zero));
     overlaySize ??= MediaQuery.of(context).size.width * 0.9;
+
+    final double bottomInset = MediaQuery.of(context).viewPadding.bottom;
+
     double top = topLeft.dy > MediaQuery.of(context).size.height * 0.3
         ? topLeft.dy - 70
         : bottomRight.dy;
@@ -28,7 +31,9 @@ class AnimatedFlutterReaction {
         ? MediaQuery.of(context).size.height - bottomRight.dy - 60
         : MediaQuery.of(context).size.height -
             bottomRight.dy +
-            (bottomRight.dy - topLeft.dy)+10;
+            (bottomRight.dy - topLeft.dy) +
+            10 +
+            bottomInset; 
     RelativeRect relativeRect = RelativeRect.fromLTRB(
         (MediaQuery.of(context).size.width - overlaySize) / 2,
         top,
