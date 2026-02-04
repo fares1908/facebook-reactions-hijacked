@@ -1,3 +1,4 @@
+// reaction_overlay.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_animated_reaction/reaction.dart';
 
@@ -54,50 +55,44 @@ class _ReactionOverlayState extends State<ReactionOverlay>
 
   @override
   Widget build(BuildContext context) {
-    // Use real screen size (not affected by SafeArea builder)
-    final mq = MediaQueryData.fromView(View.of(context));
-
-    return SizedBox(
-      width: mq.size.width,
-      height: mq.size.height,
-      child: Stack(
-        fit: StackFit.expand, // ensure the coordinate space matches screen
-        children: [
-          ModalBarrier(onDismiss: widget.onDismiss),
-          Positioned.fromRelativeRect(
-            rect: widget.relativeRect,
-            child: ScaleTransition(
-              scale: animation,
-              child: Material(
-                type: MaterialType.card,
-                elevation: 0.5,
-                borderRadius: BorderRadius.circular(30),
-                child: Container(
-                  width: widget.overlaySize,
-                  constraints:
-                      const BoxConstraints(maxHeight: 60, minHeight: 60),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    color: widget.backgroundColor,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      for (int i = 0; i < widget.reactions.length; i++)
-                        Reaction(
-                          path: widget.reactions[i],
-                          onTap: widget.onPressReact,
-                          index: i,
-                          size: widget.size ?? const Size(45, 45),
-                        ),
-                    ],
-                  ),
+    // ✅ No MediaQueryData.fromView and no SizedBox forcing raw screen size.
+    // We just expand to whatever the Overlay gives us.
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ModalBarrier(onDismiss: widget.onDismiss),
+        Positioned.fromRelativeRect(
+          rect: widget.relativeRect,
+          child: ScaleTransition(
+            scale: animation,
+            child: Material(
+              type: MaterialType.card,
+              elevation: 0.5,
+              borderRadius: BorderRadius.circular(30),
+              child: Container(
+                width: widget.overlaySize,
+                constraints: const BoxConstraints(maxHeight: 60, minHeight: 60),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  color: widget.backgroundColor,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    for (int i = 0; i < widget.reactions.length; i++)
+                      Reaction(
+                        path: widget.reactions[i],
+                        onTap: widget.onPressReact,
+                        index: i,
+                        size: widget.size ?? const Size(45, 45),
+                      ),
+                  ],
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

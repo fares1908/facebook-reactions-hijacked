@@ -1,4 +1,7 @@
+// animated_flutter_reaction.dart
 library flutter_animated_reaction;
+
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animated_reaction/reaction_data.dart';
@@ -6,7 +9,7 @@ import 'package:flutter_animated_reaction/reaction_overlay.dart';
 
 class AnimatedFlutterReaction {
   OverlayEntry? overlayEntry;
-  late OverlayState overlayState;
+  OverlayState? overlayState;
 
   void showOverlay({
     required BuildContext context,
@@ -17,42 +20,66 @@ class AnimatedFlutterReaction {
     double? overlaySize,
     Size? iconSize,
   }) {
-    // Use the real screen metrics (not affected by SafeArea builder)
-    final mq = MediaQueryData.fromView(View.of(context));
-    final screenW = mq.size.width;
-    final screenH = mq.size.height;
-    final padTop = mq.viewPadding.top;
-    final padBottom = mq.viewPadding.bottom;
+    hideOverlay();
 
-    final box = key.currentContext!.findRenderObject() as RenderBox;
-    final topLeft = box.size.topCenter(box.localToGlobal(Offset.zero));
-    final bottomRight = box.size.bottomCenter(box.localToGlobal(Offset.zero));
+    final targetCtx = key.currentContext;
+    if (targetCtx == null) return;
+
+    // ✅ IMPORTANT: use overlay INSIDE the widget tree (affected by SafeArea)
+    final overlay = Overlay.of(context); // <-- no rootOverlay
+    overlayState = overlay;
+
+    final overlayRO = overlay.context.findRenderObject();
+    if (overlayRO is! RenderBox || !overlayRO.hasSize) return;
+    final overlayBox = overlayRO;
+
+    final targetRO = targetCtx.findRenderObject();
+    if (targetRO is! RenderBox || !targetRO.hasSize) return;
+    final render = targetRO;
+
+    // ✅ Real available space for overlay (after SafeArea)
+    final screenW = overlayBox.size.width;
+    final screenH = overlayBox.size.height;
+
+    // ✅ Insets: top must still respect status bar even if SafeArea(top:false)
+    final mq = MediaQuery.of(context);
+    final padTop = mq.viewPadding.top;
+
+    // ✅ bottom: take the biggest (safe padding / nav bar / gesture area)
+    final padBottom = math.max(
+      math.max(mq.padding.bottom, mq.viewPadding.bottom),
+      mq.systemGestureInsets.bottom,
+    );
+
+    // ✅ Position relative to overlay (same coordinate space!)
+    final pos = render.localToGlobal(Offset.zero, ancestor: overlayBox);
+    final topCenter = render.size.topCenter(pos);
+    final bottomCenter = render.size.bottomCenter(pos);
 
     overlaySize ??= screenW * 0.9;
 
-    const barH = 60.0; // must match ReactionOverlay bar constraints
+    const barH = 60.0;
     const gap = 10.0;
     const margin = 8.0;
 
-    final placeAbove = topLeft.dy > screenH * 0.3;
+    final placeAbove = topCenter.dy > screenH * 0.3;
 
     double top =
-        placeAbove ? (topLeft.dy - barH - gap) : (bottomRight.dy + gap);
+        placeAbove ? (topCenter.dy - barH - gap) : (bottomCenter.dy + gap);
 
-    // Keep bar inside system safe areas
+    // Keep bar inside safe bounds
     final minTop = padTop + margin;
     final maxTop = screenH - padBottom - barH - margin;
     top = top.clamp(minTop, maxTop);
 
     final left = (screenW - overlaySize!) / 2;
-    final right = left;
     final bottom = screenH - top - barH;
 
-    final relativeRect = RelativeRect.fromLTRB(left, top, right, bottom);
+    final relativeRect = RelativeRect.fromLTRB(left, top, left, bottom);
 
     overlayEntry = OverlayEntry(
       builder: (_) => ReactionOverlay(
-        onDismiss: () => hideOverlay(),
+        onDismiss: hideOverlay,
         relativeRect: relativeRect,
         overlaySize: overlaySize!,
         reactions: reactions ?? ReactionData.facebookReactionIcon,
@@ -65,9 +92,7 @@ class AnimatedFlutterReaction {
       ),
     );
 
-    // IMPORTANT: insert into ROOT overlay (not the one wrapped by SafeArea builder)
-    overlayState = Overlay.of(context, rootOverlay: true);
-    overlayState.insert(overlayEntry!);
+    overlayState!.insert(overlayEntry!);
   }
 
   void hideOverlay() {
