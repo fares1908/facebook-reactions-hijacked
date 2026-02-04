@@ -5,7 +5,7 @@ import 'package:flutter_animated_reaction/reaction_data.dart';
 import 'package:flutter_animated_reaction/reaction_overlay.dart';
 
 class AnimatedFlutterReaction {
-  late final OverlayEntry? overlayEntry;
+  OverlayEntry? overlayEntry;
   late OverlayState overlayState;
 
   void showOverlay({
@@ -17,6 +17,7 @@ class AnimatedFlutterReaction {
     double? overlaySize,
     Size? iconSize,
   }) {
+    // Use the real screen metrics (not affected by SafeArea builder)
     final mq = MediaQueryData.fromView(View.of(context));
     final screenW = mq.size.width;
     final screenH = mq.size.height;
@@ -29,7 +30,7 @@ class AnimatedFlutterReaction {
 
     overlaySize ??= screenW * 0.9;
 
-    const barH = 60.0;
+    const barH = 60.0; // must match ReactionOverlay bar constraints
     const gap = 10.0;
     const margin = 8.0;
 
@@ -38,6 +39,7 @@ class AnimatedFlutterReaction {
     double top =
         placeAbove ? (topLeft.dy - barH - gap) : (bottomRight.dy + gap);
 
+    // Keep bar inside system safe areas
     final minTop = padTop + margin;
     final maxTop = screenH - padBottom - barH - margin;
     top = top.clamp(minTop, maxTop);
@@ -50,12 +52,12 @@ class AnimatedFlutterReaction {
 
     overlayEntry = OverlayEntry(
       builder: (_) => ReactionOverlay(
-        onDismiss: () => hideOverlay(context),
+        onDismiss: () => hideOverlay(),
         relativeRect: relativeRect,
         overlaySize: overlaySize!,
         reactions: reactions ?? ReactionData.facebookReactionIcon,
         onPressReact: (val) {
-          hideOverlay(context);
+          hideOverlay();
           onReaction(val);
         },
         size: iconSize,
@@ -63,11 +65,13 @@ class AnimatedFlutterReaction {
       ),
     );
 
-    overlayState = Overlay.of(context);
+    // IMPORTANT: insert into ROOT overlay (not the one wrapped by SafeArea builder)
+    overlayState = Overlay.of(context, rootOverlay: true);
     overlayState.insert(overlayEntry!);
   }
 
-  void hideOverlay(BuildContext context) {
-    overlayEntry!.remove();
+  void hideOverlay() {
+    overlayEntry?.remove();
+    overlayEntry = null;
   }
 }
