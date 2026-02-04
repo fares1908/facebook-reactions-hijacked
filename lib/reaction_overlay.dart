@@ -1,4 +1,3 @@
-// reaction_overlay.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_animated_reaction/reaction.dart';
 
@@ -14,7 +13,7 @@ class ReactionOverlay extends StatefulWidget {
     this.size,
   });
 
-  final VoidCallback onDismiss;
+  final Function() onDismiss;
   final Function(int) onPressReact;
   final List<String> reactions;
   final RelativeRect relativeRect;
@@ -28,8 +27,8 @@ class ReactionOverlay extends StatefulWidget {
 
 class _ReactionOverlayState extends State<ReactionOverlay>
     with TickerProviderStateMixin {
-  late final AnimationController controller;
-  late final Animation<double> animation;
+  late AnimationController controller;
+  late Animation<double> animation;
 
   @override
   void initState() {
@@ -55,8 +54,10 @@ class _ReactionOverlayState extends State<ReactionOverlay>
 
   @override
   Widget build(BuildContext context) {
-    // ✅ No MediaQueryData.fromView and no SizedBox forcing raw screen size.
-    // We just expand to whatever the Overlay gives us.
+    //  SizedBox(width/height: MediaQuery.size)
+    /// Here we use Stack to place the overlay in the correct position
+    /// using Positioned.fromRelativeRect
+    /// The ModalBarrier is used to dismiss the overlay when tapping outside
     return Stack(
       fit: StackFit.expand,
       children: [
